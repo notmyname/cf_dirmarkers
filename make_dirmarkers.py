@@ -7,8 +7,8 @@ import cf_auth
 CDN_LOGS = '.CDN_ACCESS_LOGS'
 
 # auth
-conn = httplib.HTTPSConnection('api.mosso.com')
-conn.request('GET', '/auth', headers={'x-auth-user': cf_auth.username,
+conn = httplib.HTTPSConnection('auth.api.rackspacecloud.com')
+conn.request('GET', '/v1.0', headers={'x-auth-user': cf_auth.username,
                                       'x-auth-key': cf_auth.apikey})
 resp = conn.getresponse()
 auth_token = resp.getheader('x-auth-token')
@@ -51,10 +51,15 @@ while len(results):
 
 # create the directory markers
 send_headers = {'X-Auth-Token': auth_token,
-                'Content-Type': 'application/directory'}
+                'Content-Type': 'application/directory',
+                'Content-Length': 0}
 container_path = '/' + '/'.join(url.split('/')[3:]) + '/' + CDN_LOGS
 print len(prefixes), 'objects to create'
 for i, p in enumerate(sorted(prefixes)):
-    conn.request('PUT', container_path + '/' + p, headers=send_headers)
-    conn.getresponse().read()
-    print i
+    directory_marker = container_path + '/' + p
+    conn.request('PUT', directory_marker, headers=send_headers)
+    resp = conn.getresponse()
+    x = resp.read()
+    if resp.status != 201:
+        print resp.status, x
+print 'done'

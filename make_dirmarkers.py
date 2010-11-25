@@ -31,7 +31,7 @@ while len(results):
 
 url, _, auth_token = conn.auth.authenticate()
 httpconn = httplib.HTTPSConnection(url.split('/')[2])
-send_headers = {'X-Auth-Token': auth_token, 'Content-Type': 'text/plain'}
+send_headers = {'X-Auth-Token': auth_token, 'Content-Type': 'application/directory'}
 container_path = '/' + '/'.join(url.split('/')[3:]) + '/' + CDN_LOGS
 print len(prefixes), 'objects to create'
 for i, p in enumerate(sorted(prefixes)):

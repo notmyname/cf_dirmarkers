@@ -6,7 +6,6 @@ import cf_auth
 
 CDN_LOGS = '.CDN_ACCESS_LOGS'
 
-
 # auth
 conn = httplib.HTTPSConnection('api.mosso.com')
 conn.request('GET', '/auth', headers={'x-auth-user': cf_auth.username,
@@ -15,8 +14,13 @@ resp = conn.getresponse()
 auth_token = resp.getheader('x-auth-token')
 url = resp.getheader('x-storage-url')
 conn.close()
-container_path = '/'+'/'.join(url.split('/')[3:])+'/' + CDN_LOGS
+
+# working in the same contianer
+container_path = '/' + '/'.join(url.split('/')[3:]) + '/' + CDN_LOGS
+
+# use one connection to avoid setup/teardowns
 conn = httplib.HTTPSConnection(url.split('/')[2])
+
 
 def get_listing(marker=None):
     global conn
@@ -27,6 +31,7 @@ def get_listing(marker=None):
     resp = conn.getresponse()
     return [x for x in resp.read().split('\n') if x]
 
+# find all the unique prefixes
 prefixes = set()
 results = ['foo']
 last = None
@@ -44,10 +49,12 @@ while len(results):
             if parts not in results:
                 prefixes.add(parts)
 
-send_headers = {'X-Auth-Token': auth_token, 'Content-Type': 'application/directory'}
+# create the directory markers
+send_headers = {'X-Auth-Token': auth_token,
+                'Content-Type': 'application/directory'}
 container_path = '/' + '/'.join(url.split('/')[3:]) + '/' + CDN_LOGS
 print len(prefixes), 'objects to create'
 for i, p in enumerate(sorted(prefixes)):
-    conn.request('PUT', container_path+'/'+p, headers=send_headers)
+    conn.request('PUT', container_path + '/' + p, headers=send_headers)
     conn.getresponse().read()
     print i
